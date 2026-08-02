@@ -326,6 +326,7 @@ function gambar(){
      Data dari sheet berurutan lama→baru, jadi cukup dibalik.
      Tampil 5 teratas; sisanya dibuka lewat tombol dropdown. */
   const wadah = document.getElementById("wadahTrx");
+  wadah.innerHTML = "";   // kosongkan dulu supaya tidak dobel saat data disegarkan ulang
   if (!trxHariIni.length){
     wadah.innerHTML = `<div class="kosong">Belum ada catatan hari ini.<br>
       Kirim struk atau <b>/catat</b> lewat bot untuk mengisinya.</div>`;
@@ -389,6 +390,7 @@ function gambar(){
   }
   const puncak = Math.max(...deret.map(x=>x.nilai),1);
   const chart = document.getElementById("chart");
+  chart.innerHTML = "";   // kosongkan dulu supaya batang tidak menumpuk saat disegarkan ulang
 
   deret.forEach((x,i)=>{
     const col=document.createElement("div");
@@ -415,6 +417,7 @@ function gambar(){
      Begitu HTML-nya diaktifkan lagi, bagian ini langsung jalan tanpa perubahan. */
   const elKat=document.getElementById("kat");
   if (elKat){
+    elKat.innerHTML = "";   // kosongkan dulu supaya tidak dobel saat disegarkan ulang
     const perKat=new Map();
     periodeIni.forEach(r=>perKat.set(r[1],(perKat.get(r[1])||0)+r[2]));
     [...perKat.entries()].sort((a,b)=>b[1]-a[1]).forEach(([nama,nilai],i)=>{
