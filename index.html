@@ -220,10 +220,11 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
    URL di bawah adalah Apps Script yang membaca sheet Pengeluaran.
    Ganti kalau nanti kamu deploy ulang.
    ============================================================ */
-const URL_DATA = "https://script.google.com/macros/s/AKfycbyz50GmAPyYwKgS5FFf6bqbClCh9wg5PvdFA37wkhQzzZuJvP4FJ0l50kkktVHdTLRE/exec";
+const URL_DATA = "https://script.google.com/macros/s/AKfycbwtB95VrLzShDUUTJFPixJ8Dvwv1SjM4yhxjfuolha_jlERrvNIRh9tWa1CilaNppdI/exec";
 const HARI_SIKLUS = 25;
 
 let pengeluaran = [];
+let totalPaylaterSheet = null;   // diisi dari Rekap Daily (via Apps Script) kalau tersedia
 
 /* ---------- util ---------- */
 const rp  = n => "Rp" + Math.round(n).toLocaleString("id-ID");
@@ -292,13 +293,17 @@ function gambar(){
      Menjumlah semua transaksi ber-Tipe Bayar "Pay Later" dalam periode berjalan.
      Ganti `periodeIni` menjadi `pengeluaran` di bawah kalau mau total sepanjang
      waktu, bukan per periode. */
-  const totalPayLater = periodeIni
-    .filter(r => r[6] === "Pay Later")
-    .reduce((a,r) => a + r[2], 0);
+  /* ---------- total Pay Later (pengingat menahan diri) ----------
+     Utamakan nilai "Total Paylater" dari sheet Rekap Daily (dikirim Apps Script
+     sebagai json.totalPaylater). Kalau field itu belum tersedia, jatuh kembali
+     ke hitungan lama: menjumlah transaksi ber-Tipe Bayar "Pay Later" periode ini. */
+  const totalPayLater = (totalPaylaterSheet != null)
+    ? totalPaylaterSheet
+    : periodeIni.filter(r => r[6] === "Pay Later").reduce((a,r) => a + r[2], 0);
   const elPL = document.getElementById("heroPL");
   elPL.className = "hero-pl" + (totalPayLater > 0 ? " ada" : "");
   elPL.innerHTML =
-    `<span class="pl-lbl">Total Pay Later periode ini</span>
+    `<span class="pl-lbl">Total Pay Later</span>
      <span class="pl-val">${rp(totalPayLater)}</span>`;
 
   /* ---------- statistik ---------- */
@@ -465,6 +470,8 @@ function muat(){
   window[nama] = (json) => {
     bersihkan();
     pengeluaran = (json && json.pengeluaran) || [];
+    totalPaylaterSheet = (json && json.totalPaylater != null && !isNaN(Number(json.totalPaylater)))
+      ? Number(json.totalPaylater) : null;
     gambar();
     const el = document.getElementById("segar");
     if (el) el.textContent = "Diperbarui " +
