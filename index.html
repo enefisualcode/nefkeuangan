@@ -7,9 +7,9 @@
 
 <style>
 :root{
-  --ink:#0C1513; --surface:#141F1C; --surface-2:#1B2825; --line:#26332F;
-  --mint:#67D6A4; --amber:#E8A33D; --coral:#EE7A66;
-  --text:#E6EDE9; --muted:#8A9B95; --faint:#5C6C67;
+  --ink:#0B1220; --surface:#131D30; --surface-2:#1C2841; --line:#293752;
+  --blue:#54A8FF; --orange:#FF9A3D; --orange-deep:#FF7847;
+  --text:#E9F0FA; --muted:#8C9CB8; --faint:#5A6B88;
   --display:"Bricolage Grotesque",system-ui,sans-serif;
   --body:"Instrument Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -47,8 +47,24 @@ body{
   font-family:var(--mono);font-size:11px;font-weight:500;
   padding:3px 8px;border-radius:99px;white-space:nowrap;
 }
-.pil.atas{background:rgba(238,122,102,.15);color:var(--coral)}
-.pil.bawah{background:rgba(103,214,164,.15);color:var(--mint)}
+.pil.atas{background:rgba(255,120,71,.15);color:var(--orange-deep)}
+.pil.bawah{background:rgba(84,168,255,.15);color:var(--blue)}
+
+/* baris total Pay Later di kartu hero — pengingat menahan diri */
+.hero-pl{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
+}
+.hero-pl:empty{display:none}
+.hero-pl .pl-lbl{
+  font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);
+}
+.hero-pl .pl-val{
+  font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;color:var(--muted);
+}
+.hero-pl.ada .pl-val{color:var(--orange-deep)}
 
 /* ---------- statistik ---------- */
 .stat{margin:12px 20px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -80,10 +96,18 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
   align-items:center;padding:12px 0;border-bottom:1px solid var(--line);
 }
 .trx-row:last-child{border-bottom:none}
+.trx-row.sisa{display:none}
+.trx.trx-buka .trx-row.sisa{display:grid}
+.trx-toggle{
+  display:block;width:100%;margin-top:2px;padding:12px 0 2px;
+  background:none;border:none;cursor:pointer;text-align:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--blue);
+}
+.trx-toggle:hover{color:var(--text)}
 .tanda{
   width:34px;height:34px;border-radius:10px;background:var(--surface-2);
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--mint);
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue);
 }
 .trx-nama{font-size:14px;line-height:1.3}
 .trx-meta{font-size:11.5px;color:var(--faint);margin-top:2px}
@@ -104,9 +128,9 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 }
 .chart{display:flex;align-items:flex-end;gap:3px;height:120px}
 .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
-.col i{display:block;width:100%;background:var(--amber);border-radius:3px 3px 1px 1px;min-height:2px;opacity:.78}
-.col.hi i{opacity:1;background:var(--coral)}
-.col.kini i{opacity:1;background:var(--mint)}
+.col i{display:block;width:100%;background:var(--orange);border-radius:3px 3px 1px 1px;min-height:2px;opacity:.78}
+.col.hi i{opacity:1;background:var(--orange-deep)}
+.col.kini i{opacity:1;background:var(--blue)}
 .garis{position:relative;height:0}
 .garis::before{
   content:"";position:absolute;left:0;right:0;top:0;
@@ -126,7 +150,7 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .kat-nama{font-size:14px}
 .kat-nilai{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
 .kat-bar{grid-column:1/-1;height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden}
-.kat-bar span{display:block;height:100%;background:var(--mint);border-radius:99px;opacity:.7}
+.kat-bar span{display:block;height:100%;background:var(--blue);border-radius:99px;opacity:.7}
 .kat-row:first-child .kat-bar span{opacity:1}
 .kat-pct{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
 
@@ -155,6 +179,7 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
   <div class="hero-tgl" id="heroTgl">—</div>
   <div class="hero-num" id="heroNum">—</div>
   <div class="banding" id="banding"></div>
+  <div class="hero-pl" id="heroPL"></div>
 </section>
 
 <div class="stat">
@@ -180,8 +205,12 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
   <div class="catatan" id="catatan">—</div>
 </div>
 
+<!-- Disembunyikan sementara: kategori belum valid.
+     Aktifkan lagi dengan menghapus tanda komentar di baris berikut. -->
+<!--
 <h2>Ke mana perginya</h2>
 <div class="kat" id="kat"></div>
+-->
 
 <div class="kaki" id="kaki">—</div>
 
@@ -259,39 +288,78 @@ function gambar(){
        </span>
        <span>${selisih>0?"di atas":"di bawah"} rata-rata harianmu</span>`;
 
+  /* ---------- total Pay Later periode ini (pengingat menahan diri) ----------
+     Menjumlah semua transaksi ber-Tipe Bayar "Pay Later" dalam periode berjalan.
+     Ganti `periodeIni` menjadi `pengeluaran` di bawah kalau mau total sepanjang
+     waktu, bukan per periode. */
+  const totalPayLater = periodeIni
+    .filter(r => r[6] === "Pay Later")
+    .reduce((a,r) => a + r[2], 0);
+  const elPL = document.getElementById("heroPL");
+  elPL.className = "hero-pl" + (totalPayLater > 0 ? " ada" : "");
+  elPL.innerHTML =
+    `<span class="pl-lbl">Total Pay Later periode ini</span>
+     <span class="pl-val">${rp(totalPayLater)}</span>`;
+
   /* ---------- statistik ---------- */
   document.getElementById("vRata").textContent = rp(rata);
   document.getElementById("sRata").textContent = `dari ${hariAktif} hari ada transaksi`;
   document.getElementById("vTotal").textContent = rpk(totalPeriode);
   document.getElementById("sTotal").textContent = `hari ke-${hariKe} dari ${totalHari}`;
 
-  /* ---------- rincian hari ini ---------- */
+  /* ---------- rincian hari ini ----------
+     Diurutkan dari transaksi TERAKHIR (paling baru dicatat) ke paling lama.
+     Data dari sheet berurutan lama→baru, jadi cukup dibalik.
+     Tampil 5 teratas; sisanya dibuka lewat tombol dropdown. */
   const wadah = document.getElementById("wadahTrx");
   if (!trxHariIni.length){
     wadah.innerHTML = `<div class="kosong">Belum ada catatan hari ini.<br>
       Kirim struk atau <b>/catat</b> lewat bot untuk mengisinya.</div>`;
   } else {
+    const BATAS = 5;
+    const urut = trxHariIni.slice().reverse();   // terbaru di atas
+
+    const buatBaris = r => {
+      const [,kat,nom,merchant,sumber,catatan,tipe] = r;
+      const judul = merchant && merchant !== "-" ? merchant : kat;
+      const bagian = [kat];
+      if (catatan) bagian.push(catatan);
+      if (tipe === "Pay Later") bagian.push("Pay Later");
+      const row = document.createElement("div");
+      row.className = "trx-row";
+      row.innerHTML = `
+        <span class="tanda">${kat.slice(0,2).toUpperCase()}</span>
+        <span>
+          <div class="trx-nama">${judul}</div>
+          <div class="trx-meta">${bagian.join(" · ")}</div>
+        </span>
+        <span class="trx-nilai">${rp(nom)}</span>`;
+      return row;
+    };
+
     const list = document.createElement("div");
     list.className = "trx";
-    trxHariIni
-      .slice().sort((a,b)=>b[2]-a[2])
-      .forEach(r=>{
-        const [,kat,nom,merchant,sumber,catatan,tipe] = r;
-        const judul = merchant && merchant !== "-" ? merchant : kat;
-        const bagian = [kat];
-        if (catatan) bagian.push(catatan);
-        if (tipe === "Pay Later") bagian.push("Pay Later");
-        const row = document.createElement("div");
-        row.className = "trx-row";
-        row.innerHTML = `
-          <span class="tanda">${kat.slice(0,2).toUpperCase()}</span>
-          <span>
-            <div class="trx-nama">${judul}</div>
-            <div class="trx-meta">${bagian.join(" · ")}</div>
-          </span>
-          <span class="trx-nilai">${rp(nom)}</span>`;
-        list.appendChild(row);
+    urut.forEach((r,i)=>{
+      const row = buatBaris(r);
+      if (i >= BATAS) row.classList.add("sisa");   // disembunyikan dulu
+      list.appendChild(row);
+    });
+
+    if (urut.length > BATAS){
+      const sisa = urut.length - BATAS;
+      const tombol = document.createElement("button");
+      tombol.className = "trx-toggle";
+      tombol.setAttribute("aria-expanded","false");
+      const labelTutup = `Lihat semua ${urut.length} transaksi (${sisa} lagi) ▾`;
+      const labelBuka  = `Tampilkan lebih sedikit ▴`;
+      tombol.textContent = labelTutup;
+      tombol.addEventListener("click", ()=>{
+        const buka = list.classList.toggle("trx-buka");
+        tombol.textContent = buka ? labelBuka : labelTutup;
+        tombol.setAttribute("aria-expanded", buka ? "true" : "false");
       });
+      list.appendChild(tombol);
+    }
     wadah.appendChild(list);
   }
 
@@ -325,27 +393,31 @@ function gambar(){
 
   const terboros = deret.find(x=>x.nilai===puncak);
   document.getElementById("catatan").innerHTML =
-    `Batang hijau adalah hari ini. Paling boros
+    `Batang biru adalah hari ini. Paling boros
      <b>${fmt(terboros.tgl,{weekday:"long",day:"numeric",month:"long"})}</b> — ${rp(puncak)}.`;
 
-  /* ---------- kategori ---------- */
-  const perKat=new Map();
-  periodeIni.forEach(r=>perKat.set(r[1],(perKat.get(r[1])||0)+r[2]));
+  /* ---------- kategori (disembunyikan sementara — kategori belum valid) ----------
+     Blok ini otomatis dilewati selama elemen #kat masih di-comment di HTML.
+     Begitu HTML-nya diaktifkan lagi, bagian ini langsung jalan tanpa perubahan. */
   const elKat=document.getElementById("kat");
-  [...perKat.entries()].sort((a,b)=>b[1]-a[1]).forEach(([nama,nilai],i)=>{
-    const p=nilai/totalPeriode*100;
-    const row=document.createElement("div");
-    row.className="kat-row";
-    row.innerHTML=`
-      <span class="kat-nama">${nama}</span>
-      <span class="kat-nilai">${rp(nilai)}</span>
-      <span class="kat-bar"><span style="width:0"></span></span>
-      <span class="kat-pct">${p.toFixed(0)}%</span>`;
-    elKat.appendChild(row);
-    const isi=row.querySelector(".kat-bar span");
-    isi.style.transition="width .7s cubic-bezier(.22,.9,.3,1) "+(i*70+150)+"ms";
-    requestAnimationFrame(()=>isi.style.width=p+"%");
-  });
+  if (elKat){
+    const perKat=new Map();
+    periodeIni.forEach(r=>perKat.set(r[1],(perKat.get(r[1])||0)+r[2]));
+    [...perKat.entries()].sort((a,b)=>b[1]-a[1]).forEach(([nama,nilai],i)=>{
+      const p=nilai/totalPeriode*100;
+      const row=document.createElement("div");
+      row.className="kat-row";
+      row.innerHTML=`
+        <span class="kat-nama">${nama}</span>
+        <span class="kat-nilai">${rp(nilai)}</span>
+        <span class="kat-bar"><span style="width:0"></span></span>
+        <span class="kat-pct">${p.toFixed(0)}%</span>`;
+      elKat.appendChild(row);
+      const isi=row.querySelector(".kat-bar span");
+      isi.style.transition="width .7s cubic-bezier(.22,.9,.3,1) "+(i*70+150)+"ms";
+      requestAnimationFrame(()=>isi.style.width=p+"%");
+    });
+  }
 
   /* ---------- kaki ---------- */
   document.getElementById("kaki").innerHTML =
