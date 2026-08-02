@@ -1,0 +1,412 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Keuangan — Hari Ini</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#0C1513; --surface:#141F1C; --surface-2:#1B2825; --line:#26332F;
+  --mint:#67D6A4; --amber:#E8A33D; --coral:#EE7A66;
+  --text:#E6EDE9; --muted:#8A9B95; --faint:#5C6C67;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--ink);color:var(--text);font-family:var(--body);
+  -webkit-font-smoothing:antialiased;padding:0 0 48px;max-width:560px;margin:0 auto;
+}
+
+.top{padding:28px 20px 0;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.periode{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+
+/* ---------- hero: hari ini ---------- */
+.hero{
+  margin:16px 20px 0;background:var(--surface);border:1px solid var(--line);
+  border-radius:20px;padding:22px 22px 20px;
+}
+.hero-lbl{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint);
+}
+.hero-tgl{font-size:12.5px;color:var(--muted);margin-top:3px}
+.hero-num{
+  font-family:var(--display);font-size:42px;font-weight:800;
+  letter-spacing:-.03em;line-height:1.05;margin-top:12px;
+  font-variant-numeric:tabular-nums;
+}
+.banding{
+  display:flex;align-items:center;gap:8px;margin-top:12px;
+  font-size:12.5px;color:var(--muted);line-height:1.45;
+}
+.pil{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  padding:3px 8px;border-radius:99px;white-space:nowrap;
+}
+.pil.atas{background:rgba(238,122,102,.15);color:var(--coral)}
+.pil.bawah{background:rgba(103,214,164,.15);color:var(--mint)}
+
+/* ---------- statistik ---------- */
+.stat{margin:12px 20px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kartu{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:14px 15px;
+}
+.kartu .l{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);
+}
+.kartu .v{
+  font-family:var(--mono);font-size:17px;font-weight:500;margin-top:6px;
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+}
+.kartu .s{font-size:11px;color:var(--muted);margin-top:3px}
+
+h2{
+  font-family:var(--mono);font-size:10.5px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
+  margin:32px 20px 12px;display:flex;align-items:center;gap:10px;
+}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ---------- transaksi hari ini ---------- */
+.trx{margin:0 20px}
+.trx-row{
+  display:grid;grid-template-columns:auto 1fr auto;gap:12px;
+  align-items:center;padding:12px 0;border-bottom:1px solid var(--line);
+}
+.trx-row:last-child{border-bottom:none}
+.tanda{
+  width:34px;height:34px;border-radius:10px;background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--mint);
+}
+.trx-nama{font-size:14px;line-height:1.3}
+.trx-meta{font-size:11.5px;color:var(--faint);margin-top:2px}
+.trx-nilai{
+  font-family:var(--mono);font-size:14px;font-weight:500;
+  font-variant-numeric:tabular-nums;
+}
+.kosong{
+  margin:0 20px;background:var(--surface);border:1px dashed var(--line);
+  border-radius:14px;padding:22px;text-align:center;
+  font-size:13px;color:var(--muted);line-height:1.5;
+}
+
+/* ---------- grafik harian ---------- */
+.harian{
+  margin:0 20px;background:var(--surface);border:1px solid var(--line);
+  border-radius:16px;padding:18px 16px 12px;
+}
+.chart{display:flex;align-items:flex-end;gap:3px;height:120px}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.col i{display:block;width:100%;background:var(--amber);border-radius:3px 3px 1px 1px;min-height:2px;opacity:.78}
+.col.hi i{opacity:1;background:var(--coral)}
+.col.kini i{opacity:1;background:var(--mint)}
+.garis{position:relative;height:0}
+.garis::before{
+  content:"";position:absolute;left:0;right:0;top:0;
+  border-top:1px dashed var(--faint);opacity:.45;
+}
+.xlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:9px}
+.catatan{font-size:12px;color:var(--muted);margin:11px 2px 0;line-height:1.5}
+.catatan b{color:var(--text);font-weight:600}
+
+/* ---------- kategori ---------- */
+.kat{margin:0 20px;display:flex;flex-direction:column}
+.kat-row{
+  display:grid;grid-template-columns:1fr auto;gap:4px 12px;
+  padding:11px 0;border-bottom:1px solid var(--line);align-items:center;
+}
+.kat-row:last-child{border-bottom:none}
+.kat-nama{font-size:14px}
+.kat-nilai{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
+.kat-bar{grid-column:1/-1;height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.kat-bar span{display:block;height:100%;background:var(--mint);border-radius:99px;opacity:.7}
+.kat-row:first-child .kat-bar span{opacity:1}
+.kat-pct{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+
+.kaki{
+  margin:34px 20px 0;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.7;
+}
+
+@media (prefers-reduced-motion:no-preference){
+  .hero,.stat,.trx,.kosong,.harian,.kat{animation:naik .5s cubic-bezier(.22,.9,.3,1) backwards}
+  .stat{animation-delay:.06s}
+  .trx,.kosong{animation-delay:.12s}
+  .harian{animation-delay:.18s}
+  .kat{animation-delay:.24s}
+  @keyframes naik{from{opacity:0;transform:translateY(10px)}}
+}
+</style>
+
+<div class="top">
+  <div class="eyebrow">Pengeluaran</div>
+  <div class="periode" id="periode">—</div>
+</div>
+
+<section class="hero">
+  <div class="hero-lbl">Hari ini</div>
+  <div class="hero-tgl" id="heroTgl">—</div>
+  <div class="hero-num" id="heroNum">—</div>
+  <div class="banding" id="banding"></div>
+</section>
+
+<div class="stat">
+  <div class="kartu">
+    <div class="l">Rata-rata harian</div>
+    <div class="v" id="vRata">—</div>
+    <div class="s" id="sRata">—</div>
+  </div>
+  <div class="kartu">
+    <div class="l">Total periode</div>
+    <div class="v" id="vTotal">—</div>
+    <div class="s" id="sTotal">—</div>
+  </div>
+</div>
+
+<h2>Rincian hari ini</h2>
+<div id="wadahTrx"></div>
+
+<h2>Grafik harian</h2>
+<div class="harian">
+  <div class="chart" id="chart"></div>
+  <div class="xlab"><span id="xAwal">—</span><span id="xAkhir">—</span></div>
+  <div class="catatan" id="catatan">—</div>
+</div>
+
+<h2>Ke mana perginya</h2>
+<div class="kat" id="kat"></div>
+
+<div class="kaki" id="kaki">—</div>
+
+<script>
+/* ============================================================
+   SUMBER DATA
+   URL di bawah adalah Apps Script yang membaca sheet Pengeluaran.
+   Ganti kalau nanti kamu deploy ulang.
+   ============================================================ */
+const URL_DATA = "https://script.google.com/macros/s/AKfycbyz50GmAPyYwKgS5FFf6bqbClCh9wg5PvdFA37wkhQzzZuJvP4FJ0l50kkktVHdTLRE/exec";
+const HARI_SIKLUS = 25;
+
+let pengeluaran = [];
+
+/* ---------- util ---------- */
+const rp  = n => "Rp" + Math.round(n).toLocaleString("id-ID");
+const rpk = n => n >= 1e6 ? "Rp" + (n/1e6).toFixed(n%1e6===0?0:1) + " jt"
+                          : "Rp" + Math.round(n/1000) + "rb";
+const d = s => new Date(s + "T00:00:00");
+const fmt = (t,o) => t.toLocaleDateString("id-ID", o);
+const kunciTgl = t => t.getFullYear() + "-" +
+  String(t.getMonth()+1).padStart(2,"0") + "-" +
+  String(t.getDate()).padStart(2,"0");
+
+function awalPeriode(acuan){
+  const t = new Date(acuan);
+  const m = t.getDate() >= HARI_SIKLUS ? t.getMonth() : t.getMonth()-1;
+  return new Date(t.getFullYear(), m, HARI_SIKLUS);
+}
+
+function gambar(){
+  if (!pengeluaran.length){
+    document.getElementById("wadahTrx").innerHTML =
+      `<div class="kosong">Belum ada data pengeluaran.<br>
+       Catat lewat bot untuk mulai mengisinya.</div>`;
+    document.getElementById("kaki").textContent = "Tidak ada data";
+    return;
+  }
+
+  const sekarang = new Date();
+  const hariIni = new Date(sekarang.getFullYear(), sekarang.getMonth(), sekarang.getDate());
+  const kunciHariIni = kunciTgl(hariIni);
+
+  const mulai   = awalPeriode(hariIni);
+  const selesai = new Date(mulai.getFullYear(), mulai.getMonth()+1, HARI_SIKLUS-1);
+  const totalHari = Math.round((selesai-mulai)/864e5)+1;
+  const hariKe    = Math.max(Math.round((hariIni-mulai)/864e5)+1, 1);
+
+  const periodeIni = pengeluaran.filter(r=>{const t=d(r[0]); return t>=mulai && t<=selesai;});
+  const trxHariIni = periodeIni.filter(r=>r[0]===kunciHariIni);
+
+  const totalPeriode = periodeIni.reduce((a,r)=>a+r[2],0);
+  const totalHariIni = trxHariIni.reduce((a,r)=>a+r[2],0);
+
+  /* rata-rata dihitung dari hari yang benar-benar ada transaksinya */
+  const hariAktif = new Set(periodeIni.map(r=>r[0])).size;
+  const rata = hariAktif ? totalPeriode/hariAktif : 0;
+
+  /* ---------- header ---------- */
+  document.getElementById("periode").textContent =
+    fmt(mulai,{day:"numeric",month:"short"}) + " – " +
+    fmt(selesai,{day:"numeric",month:"short",year:"numeric"});
+
+  /* ---------- hero ---------- */
+  document.getElementById("heroTgl").textContent =
+    fmt(hariIni,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  document.getElementById("heroNum").textContent = rp(totalHariIni);
+
+  const selisih = totalHariIni - rata;
+  const pct = rata ? Math.abs(selisih/rata*100) : 0;
+  document.getElementById("banding").innerHTML = totalHariIni === 0
+    ? `Belum ada pengeluaran hari ini.`
+    : `<span class="pil ${selisih>0?"atas":"bawah"}">
+         ${selisih>0?"▲":"▼"} ${pct.toFixed(0)}%
+       </span>
+       <span>${selisih>0?"di atas":"di bawah"} rata-rata harianmu</span>`;
+
+  /* ---------- statistik ---------- */
+  document.getElementById("vRata").textContent = rp(rata);
+  document.getElementById("sRata").textContent = `dari ${hariAktif} hari ada transaksi`;
+  document.getElementById("vTotal").textContent = rpk(totalPeriode);
+  document.getElementById("sTotal").textContent = `hari ke-${hariKe} dari ${totalHari}`;
+
+  /* ---------- rincian hari ini ---------- */
+  const wadah = document.getElementById("wadahTrx");
+  if (!trxHariIni.length){
+    wadah.innerHTML = `<div class="kosong">Belum ada catatan hari ini.<br>
+      Kirim struk atau <b>/catat</b> lewat bot untuk mengisinya.</div>`;
+  } else {
+    const list = document.createElement("div");
+    list.className = "trx";
+    trxHariIni
+      .slice().sort((a,b)=>b[2]-a[2])
+      .forEach(r=>{
+        const [,kat,nom,merchant,sumber,catatan,tipe] = r;
+        const judul = merchant && merchant !== "-" ? merchant : kat;
+        const bagian = [kat];
+        if (catatan) bagian.push(catatan);
+        if (tipe === "Pay Later") bagian.push("Pay Later");
+        const row = document.createElement("div");
+        row.className = "trx-row";
+        row.innerHTML = `
+          <span class="tanda">${kat.slice(0,2).toUpperCase()}</span>
+          <span>
+            <div class="trx-nama">${judul}</div>
+            <div class="trx-meta">${bagian.join(" · ")}</div>
+          </span>
+          <span class="trx-nilai">${rp(nom)}</span>`;
+        list.appendChild(row);
+      });
+    wadah.appendChild(list);
+  }
+
+  /* ---------- grafik harian ---------- */
+  const perHari = new Map();
+  periodeIni.forEach(r=>perHari.set(r[0],(perHari.get(r[0])||0)+r[2]));
+
+  const deret=[];
+  for(let i=0;i<hariKe;i++){
+    const t=new Date(mulai.getFullYear(),mulai.getMonth(),mulai.getDate()+i);
+    const k=kunciTgl(t);
+    deret.push({tgl:t,nilai:perHari.get(k)||0,kini:k===kunciHariIni});
+  }
+  const puncak = Math.max(...deret.map(x=>x.nilai),1);
+  const chart = document.getElementById("chart");
+
+  deret.forEach((x,i)=>{
+    const col=document.createElement("div");
+    col.className="col" + (x.kini?" kini":(x.nilai===puncak?" hi":""));
+    col.title = fmt(x.tgl,{day:"numeric",month:"short"}) + " · " + rp(x.nilai);
+    const bar=document.createElement("i");
+    bar.style.height="0%";
+    bar.style.transition="height .55s cubic-bezier(.22,.9,.3,1) "+(i*26)+"ms";
+    col.appendChild(bar);
+    chart.appendChild(col);
+    requestAnimationFrame(()=>bar.style.height=Math.max(x.nilai/puncak*100,1.5)+"%");
+  });
+
+  document.getElementById("xAwal").textContent  = fmt(mulai,{day:"numeric",month:"short"});
+  document.getElementById("xAkhir").textContent = fmt(hariIni,{day:"numeric",month:"short"});
+
+  const terboros = deret.find(x=>x.nilai===puncak);
+  document.getElementById("catatan").innerHTML =
+    `Batang hijau adalah hari ini. Paling boros
+     <b>${fmt(terboros.tgl,{weekday:"long",day:"numeric",month:"long"})}</b> — ${rp(puncak)}.`;
+
+  /* ---------- kategori ---------- */
+  const perKat=new Map();
+  periodeIni.forEach(r=>perKat.set(r[1],(perKat.get(r[1])||0)+r[2]));
+  const elKat=document.getElementById("kat");
+  [...perKat.entries()].sort((a,b)=>b[1]-a[1]).forEach(([nama,nilai],i)=>{
+    const p=nilai/totalPeriode*100;
+    const row=document.createElement("div");
+    row.className="kat-row";
+    row.innerHTML=`
+      <span class="kat-nama">${nama}</span>
+      <span class="kat-nilai">${rp(nilai)}</span>
+      <span class="kat-bar"><span style="width:0"></span></span>
+      <span class="kat-pct">${p.toFixed(0)}%</span>`;
+    elKat.appendChild(row);
+    const isi=row.querySelector(".kat-bar span");
+    isi.style.transition="width .7s cubic-bezier(.22,.9,.3,1) "+(i*70+150)+"ms";
+    requestAnimationFrame(()=>isi.style.width=p+"%");
+  });
+
+  /* ---------- kaki ---------- */
+  document.getElementById("kaki").innerHTML =
+    `${trxHariIni.length} transaksi hari ini · ${periodeIni.length} periode ini<br>
+     Siklus tanggal ${HARI_SIKLUS} ke ${HARI_SIKLUS-1} ·
+     <span id="segar">memuat…</span>`;
+
+}
+
+/* ---------- ambil data ---------- */
+function tampilkanGagal(pesan){
+  document.getElementById("heroNum").textContent = "—";
+  document.getElementById("wadahTrx").innerHTML =
+    `<div class="kosong">${pesan}</div>`;
+  document.getElementById("kaki").textContent = "Gagal memuat";
+}
+
+/* Data diambil lewat JSONP, bukan fetch.
+   Alasannya: browser memblokir fetch dari file:// ke internet,
+   sedangkan <script> tidak kena batasan itu. Jadi cara ini tetap
+   jalan baik file dibuka langsung dari komputer maupun dari web. */
+let sedangMuat = false;
+
+function muat(){
+  if (sedangMuat) return;
+  sedangMuat = true;
+
+  const nama = "terimaData" + Date.now();
+  const s = document.createElement("script");
+  const batas = setTimeout(() => {
+    gagal("Server tidak menjawab.<br>Coba muat ulang halaman.");
+  }, 20000);
+
+  function bersihkan(){
+    clearTimeout(batas);
+    delete window[nama];
+    if (s.parentNode) s.parentNode.removeChild(s);
+    sedangMuat = false;
+  }
+  function gagal(pesan){
+    bersihkan();
+    tampilkanGagal(pesan);
+  }
+
+  window[nama] = (json) => {
+    bersihkan();
+    pengeluaran = (json && json.pengeluaran) || [];
+    gambar();
+    const el = document.getElementById("segar");
+    if (el) el.textContent = "Diperbarui " +
+      new Date().toLocaleTimeString("id-ID", {hour:"2-digit", minute:"2-digit"});
+  };
+
+  s.src = URL_DATA + "?callback=" + nama + "&_=" + Date.now();
+  s.onerror = () => gagal("Tidak bisa menghubungi server.<br>Cek koneksi internet, lalu muat ulang halaman.");
+  document.body.appendChild(s);
+}
+
+muat();
+/* Segarkan otomatis saat halaman dibuka kembali */
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) muat();
+});
+</script>
