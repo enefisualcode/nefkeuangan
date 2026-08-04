@@ -135,8 +135,8 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
   margin:0 20px;background:var(--surface);border:1px solid var(--line);
   border-radius:16px;padding:18px 16px 12px;
 }
-.chart{display:flex;align-items:flex-end;gap:3px;height:120px}
-.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.chart{display:flex;align-items:flex-end;gap:3px;height:120px;position:relative}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:pointer}
 .col i{display:block;width:100%;background:var(--orange);border-radius:3px 3px 1px 1px;min-height:2px;opacity:.78}
 .col.hi i{opacity:1;background:var(--orange-deep)}
 .col.kini i{opacity:1;background:var(--blue)}
@@ -148,6 +148,35 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .xlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:9px}
 .catatan{font-size:12px;color:var(--muted);margin:11px 2px 0;line-height:1.5}
 .catatan b{color:var(--text);font-weight:600}
+
+/* ---------- pemilih hari (rincian) ---------- */
+.rincian-head{display:flex;align-items:center;gap:10px;margin:32px 20px 12px}
+.rincian-head h2{margin:0}
+.rincian-head h2::after{display:none}
+.rincian-head .rule{flex:1;height:1px;background:var(--line)}
+#pilihHari{
+  flex:none;max-width:56%;
+  font-family:var(--mono);font-size:11px;color:var(--blue);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:9px;
+  padding:7px 26px 7px 11px;cursor:pointer;-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 3.5 L5 6.5 L8 3.5' stroke='%2354A8FF' fill='none' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+
+/* ---------- batang terpilih + tooltip ---------- */
+.col.pilih i{opacity:1;outline:2px solid rgba(233,240,250,.9);outline-offset:1px;border-radius:3px}
+.chart-tip{
+  position:absolute;transform:translateX(-50%);pointer-events:none;white-space:nowrap;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:9px;
+  padding:5px 10px;box-shadow:0 8px 20px rgba(0,0,0,.4);
+  opacity:0;transition:opacity .15s;z-index:5;
+}
+.chart-tip.tampil{opacity:1}
+.chart-tip .tip-tgl{
+  display:block;font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:1px;
+}
+.chart-tip .tip-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue)}
 
 /* ---------- kategori ---------- */
 .kat{margin:0 20px;display:flex;flex-direction:column}
@@ -204,7 +233,11 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
   </div>
 </div>
 
-<h2>Rincian hari ini</h2>
+<div class="rincian-head">
+  <h2 id="rincianJudul">Rincian hari ini</h2>
+  <span class="rule"></span>
+  <select id="pilihHari" aria-label="Pilih hari"></select>
+</div>
 <div id="wadahTrx"></div>
 
 <h2>Grafik harian</h2>
@@ -234,6 +267,7 @@ const HARI_SIKLUS = 25;
 
 let pengeluaran = [];
 let totalPaylaterSheet = null;   // diisi dari Rekap Daily (via Apps Script) kalau tersedia
+let hariDipilih = null;          // kunci tanggal yang sedang dilihat di Rincian; null = hari ini
 
 /* ---------- util ---------- */
 const rp  = n => "Rp" + Math.round(n).toLocaleString("id-ID");
@@ -321,45 +355,63 @@ function gambar(){
   document.getElementById("vTotal").textContent = rpk(totalPeriode);
   document.getElementById("sTotal").textContent = `hari ke-${hariKe} dari ${totalHari}`;
 
-  /* ---------- rincian hari ini ----------
-     Diurutkan dari transaksi TERAKHIR (paling baru dicatat) ke paling lama.
-     Data dari sheet berurutan lama→baru, jadi cukup dibalik.
-     Tampil 5 teratas; sisanya dibuka lewat tombol dropdown. */
-  const wadah = document.getElementById("wadahTrx");
-  wadah.innerHTML = "";   // kosongkan dulu supaya tidak dobel saat data disegarkan ulang
-  if (!trxHariIni.length){
-    wadah.innerHTML = `<div class="kosong">Belum ada catatan hari ini.<br>
-      Kirim struk atau <b>/catat</b> lewat bot untuk mengisinya.</div>`;
-  } else {
-    const BATAS = 5;
-    const urut = trxHariIni.slice().reverse();   // terbaru di atas
+  /* ---------- rincian per hari + grafik interaktif ----------
+     Pilih hari lewat dropdown ATAU ketuk batang grafik — keduanya menampilkan
+     total pengeluaran + rincian transaksi hari itu. Transaksi diurutkan dari
+     yang terakhir dicatat ke paling lama; tampil 5 teratas, sisanya lewat tombol. */
+  const BATAS = 5;
 
-    const buatBaris = r => {
-      const [,kat,nom,merchant,sumber,catatan,tipe] = r;
-      const judul = merchant && merchant !== "-" ? merchant : kat;
-      const bagian = [kat];
-      if (catatan) bagian.push(catatan);
-      if (tipe === "Pay Later") bagian.push("Pay Later");
-      const row = document.createElement("div");
-      row.className = "trx-row";
-      row.innerHTML = `
-        <span class="tanda">${kat.slice(0,2).toUpperCase()}</span>
-        <span>
-          <div class="trx-nama">${judul}</div>
-          <div class="trx-meta">${bagian.join(" · ")}</div>
-        </span>
-        <span class="trx-nilai">${rp(nom)}</span>`;
-      return row;
-    };
+  // kumpulkan transaksi & total per hari (dalam periode)
+  const trxPerHari = new Map();
+  const perHari = new Map();
+  periodeIni.forEach(r=>{
+    if(!trxPerHari.has(r[0])) trxPerHari.set(r[0], []);
+    trxPerHari.get(r[0]).push(r);
+    perHari.set(r[0], (perHari.get(r[0])||0) + r[2]);
+  });
 
+  const buatBaris = r => {
+    const [,kat,nom,merchant,sumber,catatan,tipe] = r;
+    const judul = merchant && merchant !== "-" ? merchant : kat;
+    const bagian = [kat];
+    if (catatan) bagian.push(catatan);
+    if (tipe === "Pay Later") bagian.push("Pay Later");
+    const row = document.createElement("div");
+    row.className = "trx-row";
+    row.innerHTML = `
+      <span class="tanda">${kat.slice(0,2).toUpperCase()}</span>
+      <span>
+        <div class="trx-nama">${judul}</div>
+        <div class="trx-meta">${bagian.join(" · ")}</div>
+      </span>
+      <span class="trx-nilai">${rp(nom)}</span>`;
+    return row;
+  };
+
+  function renderRincian(kunci){
+    const wadah = document.getElementById("wadahTrx");
+    wadah.innerHTML = "";
+    document.getElementById("rincianJudul").textContent =
+      (kunci === kunciHariIni)
+        ? "Rincian hari ini"
+        : "Rincian " + fmt(d(kunci),{weekday:"long",day:"numeric",month:"long"});
+
+    const trx = trxPerHari.get(kunci) || [];
+    if (!trx.length){
+      wadah.innerHTML = (kunci === kunciHariIni)
+        ? `<div class="kosong">Belum ada catatan hari ini.<br>
+             Kirim struk atau <b>/catat</b> lewat bot untuk mengisinya.</div>`
+        : `<div class="kosong">Tidak ada transaksi pada hari ini.</div>`;
+      return;
+    }
+    const urut = trx.slice().reverse();   // terbaru di atas
     const list = document.createElement("div");
     list.className = "trx";
     urut.forEach((r,i)=>{
       const row = buatBaris(r);
-      if (i >= BATAS) row.classList.add("sisa");   // disembunyikan dulu
+      if (i >= BATAS) row.classList.add("sisa");
       list.appendChild(row);
     });
-
     if (urut.length > BATAS){
       const sisa = urut.length - BATAS;
       const tombol = document.createElement("button");
@@ -378,38 +430,97 @@ function gambar(){
     wadah.appendChild(list);
   }
 
-  /* ---------- grafik harian ---------- */
-  const perHari = new Map();
-  periodeIni.forEach(r=>perHari.set(r[0],(perHari.get(r[0])||0)+r[2]));
-
+  /* ---------- grafik harian (interaktif) ---------- */
   const deret=[];
   for(let i=0;i<hariKe;i++){
     const t=new Date(mulai.getFullYear(),mulai.getMonth(),mulai.getDate()+i);
     const k=kunciTgl(t);
-    deret.push({tgl:t,nilai:perHari.get(k)||0,kini:k===kunciHariIni});
+    deret.push({tgl:t,k:k,nilai:perHari.get(k)||0,kini:k===kunciHariIni});
   }
   const puncak = Math.max(...deret.map(x=>x.nilai),1);
   const chart = document.getElementById("chart");
-  chart.innerHTML = "";   // kosongkan dulu supaya batang tidak menumpuk saat disegarkan ulang
+  chart.innerHTML = "";
 
+  const tip = document.createElement("div");
+  tip.className = "chart-tip";
+  tip.innerHTML = `<span class="tip-tgl"></span><span class="tip-val"></span>`;
+  chart.appendChild(tip);
+
+  const kolomByKunci = new Map();
   deret.forEach((x,i)=>{
     const col=document.createElement("div");
     col.className="col" + (x.kini?" kini":(x.nilai===puncak?" hi":""));
-    col.title = fmt(x.tgl,{day:"numeric",month:"short"}) + " · " + rp(x.nilai);
     const bar=document.createElement("i");
     bar.style.height="0%";
     bar.style.transition="height .55s cubic-bezier(.22,.9,.3,1) "+(i*26)+"ms";
     col.appendChild(bar);
+    col.addEventListener("click", ()=>{ hariDipilih = x.k; pilihHari(x.k, true); });
     chart.appendChild(col);
+    kolomByKunci.set(x.k, col);
     requestAnimationFrame(()=>bar.style.height=Math.max(x.nilai/puncak*100,1.5)+"%");
   });
+
+  function tampilkanTip(kunci){
+    const info = deret.find(x=>x.k===kunci);
+    const col = kolomByKunci.get(kunci);
+    if (!info || !col){ tip.classList.remove("tampil"); return; }
+    const total = perHari.get(kunci) || 0;
+    tip.querySelector(".tip-tgl").textContent = fmt(info.tgl,{day:"numeric",month:"short"});
+    tip.querySelector(".tip-val").textContent = rp(total);
+    tip.classList.add("tampil");
+    requestAnimationFrame(()=>{
+      const H = chart.clientHeight;
+      const barPx = Math.max(total/puncak, 0.015) * H;
+      const th = tip.offsetHeight;
+      let bottom = barPx + 8;
+      if (bottom + th > H - 2) bottom = H - th - 2;   // jangan keluar dari atas grafik
+      tip.style.bottom = bottom + "px";
+      const center = col.offsetLeft + col.offsetWidth/2;
+      const half = tip.offsetWidth/2;
+      tip.style.left = Math.min(Math.max(center, half), chart.clientWidth - half) + "px";
+    });
+  }
+
+  const sel = document.getElementById("pilihHari");
+
+  function pilihHari(kunci, withTip){
+    if (sel.value !== kunci) sel.value = kunci;
+    renderRincian(kunci);
+    chart.querySelectorAll(".col.pilih").forEach(c=>c.classList.remove("pilih"));
+    if (withTip){
+      const col = kolomByKunci.get(kunci);
+      if (col) col.classList.add("pilih");
+      tampilkanTip(kunci);
+    } else {
+      tip.classList.remove("tampil");
+    }
+  }
+
+  // isi dropdown: semua hari dari awal periode s/d hari ini (terbaru dulu),
+  // supaya setiap batang grafik punya opsi dropdown yang cocok persis.
+  const daftarHari = deret.map(x=>x.k).slice().reverse();
+  if (hariDipilih == null || !daftarHari.includes(hariDipilih)) hariDipilih = kunciHariIni;
+  sel.innerHTML = "";
+  daftarHari.forEach(k=>{
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = (k===kunciHariIni ? "Hari ini · " : "") +
+      fmt(d(k),{weekday:"short",day:"numeric",month:"short"});
+    if (k===hariDipilih) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => { hariDipilih = sel.value; pilihHari(hariDipilih, true); };
+
+  // tampilkan hari terpilih. Default hari ini = tanpa tooltip (tampilan bersih);
+  // kalau sebelumnya sedang melihat hari lain, pertahankan sorotan + tooltip.
+  pilihHari(hariDipilih, hariDipilih !== kunciHariIni);
 
   document.getElementById("xAwal").textContent  = fmt(mulai,{day:"numeric",month:"short"});
   document.getElementById("xAkhir").textContent = fmt(hariIni,{day:"numeric",month:"short"});
 
   const terboros = deret.find(x=>x.nilai===puncak);
   document.getElementById("catatan").innerHTML =
-    `Batang biru adalah hari ini. Paling boros
+    `Ketuk batang untuk lihat total &amp; rincian hari itu. Paling boros
      <b>${fmt(terboros.tgl,{weekday:"long",day:"numeric",month:"long"})}</b> — ${rp(puncak)}.`;
 
   /* ---------- kategori (disembunyikan sementara — kategori belum valid) ----------
