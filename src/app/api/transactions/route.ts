@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveActingUserId } from "@/lib/resolveUser";
+import { jakartaToday } from "@/lib/period";
 
 export async function GET(req: Request) {
   const userId = await resolveActingUserId(req);
@@ -54,7 +55,10 @@ export async function POST(req: Request) {
       source: source ?? "web",
       note: note ?? null,
       paymentType: paymentType ?? null,
-      date: date ? new Date(date) : new Date(),
+      // Tanggal disimpan sebagai tanggal kalender (tengah malam UTC), bukan
+      // jam persis, supaya perbandingan "hari ini" konsisten. Jam aslinya
+      // tetap terekam di createdAt.
+      date: date ? new Date(date) : jakartaToday(),
     },
   });
 

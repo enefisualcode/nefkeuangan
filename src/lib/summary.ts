@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { currentPeriodRange, formatPeriodLabel } from "@/lib/period";
+import {
+  currentPeriodRange,
+  daysElapsedInPeriod,
+  dateKey,
+  formatPeriodLabel,
+  jakartaToday,
+} from "@/lib/period";
 
 export async function getSummary(userId: string) {
   const { start, end } = currentPeriodRange();
@@ -17,21 +23,16 @@ export async function getSummary(userId: string) {
     .filter((t) => t.type === "EXPENSE")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const today = new Date();
-  const todayStr = today.toDateString();
+  const todayKey = dateKey(jakartaToday());
   const todayExpense = transactions
-    .filter((t) => t.type === "EXPENSE" && t.date.toDateString() === todayStr)
+    .filter((t) => t.type === "EXPENSE" && dateKey(t.date) === todayKey)
     .reduce((sum, t) => sum + t.amount, 0);
 
   const paylaterOutstanding = transactions
     .filter((t) => t.type === "EXPENSE" && t.paymentType === "Pay Later")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const daysSoFar = Math.max(
-    1,
-    Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-  );
-  const dailyAverage = Math.round(totalExpense / daysSoFar);
+  const dailyAverage = Math.round(totalExpense / daysElapsedInPeriod(start));
 
   const byCategoryMap = new Map<string, number>();
   for (const t of transactions) {
@@ -45,7 +46,7 @@ export async function getSummary(userId: string) {
   const byDayMap = new Map<string, number>();
   for (const t of transactions) {
     if (t.type !== "EXPENSE") continue;
-    const key = t.date.toISOString().slice(0, 10);
+    const key = dateKey(t.date);
     byDayMap.set(key, (byDayMap.get(key) ?? 0) + t.amount);
   }
   const byDay = Array.from(byDayMap.entries())

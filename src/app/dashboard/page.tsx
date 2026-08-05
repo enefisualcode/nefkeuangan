@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const summary = await getSummary(session!.user.id);
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
-    select: { telegramUsername: true },
+    select: { telegramId: true, telegramUsername: true },
   });
 
   const maxDay = Math.max(1, ...summary.byDay.map((d) => d.total));
@@ -57,7 +57,10 @@ export default async function DashboardPage() {
 
       <TransactionForm />
 
-      <LinkTelegram telegramUsername={user?.telegramUsername ?? null} />
+      <LinkTelegram
+        telegramId={user?.telegramId ?? null}
+        telegramUsername={user?.telegramUsername ?? null}
+      />
 
       {/* Daily chart */}
       {summary.byDay.length > 0 && (
@@ -117,6 +120,7 @@ export default async function DashboardPage() {
                     {t.date.toLocaleDateString("id-ID", {
                       day: "numeric",
                       month: "short",
+                      timeZone: "UTC",
                     })}
                     {t.note ? ` · ${t.note}` : ""}
                   </p>

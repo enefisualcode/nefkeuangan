@@ -3,18 +3,25 @@
 import { useState } from "react";
 
 export function LinkTelegram({
+  telegramId,
   telegramUsername,
 }: {
+  telegramId: string | null;
   telegramUsername: string | null;
 }) {
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if (telegramUsername) {
+  // Sebagian akun Telegram tidak punya @username, jadi status terhubung
+  // ditentukan oleh telegramId — bukan username.
+  if (telegramId) {
     return (
       <section className="rounded-xl bg-neutral-900 p-4">
         <p className="text-sm text-neutral-300">
-          🤖 Telegram terhubung: <span className="text-emerald-400">@{telegramUsername}</span>
+          🤖 Telegram terhubung
+          {telegramUsername && (
+            <span className="text-emerald-400"> · @{telegramUsername}</span>
+          )}
         </p>
       </section>
     );
