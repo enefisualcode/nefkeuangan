@@ -18,25 +18,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Kode tidak valid atau sudah kedaluwarsa" }, { status: 400 });
   }
 
-  const takenByOther = await prisma.user.findFirst({
-    where: { telegramId: String(telegramId), NOT: { id: linkCode.userId } },
-  });
-  if (takenByOther) {
-    return NextResponse.json(
-      { error: "Akun Telegram ini sudah terhubung ke akun lain" },
-      { status: 409 }
-    );
-  }
-
-  const user = await prisma.user.update({
-    where: { id: linkCode.userId },
-    data: { telegramId: String(telegramId), telegramUsername: telegramUsername ?? null },
-  });
-
-  await prisma.linkCode.update({
-    where: { code },
-    data: { usedAt: new Date() },
-  });
+  // Kalau akun Telegram ini sudah terpakai di akun web lain, koneksinya
+  // dipindah - bukan ditolak. Pengirim /link terbukti menguasai akun Telegram
+  // ini sekaligus akun web tujuan (kodenya dibuat dari sana), jadi ini memang
+  // alur "ganti akun" yang dijanjikan perintah /info.
+  const [, user] = await prisma.$transaction([
+    prisma.user.updateMany({
+      where: { telegramId: String(telegramId), NOT: { id: linkCode.userId } },
+      data: { telegramId: null, telegramUsername: null },
+    }),
+    prisma.user.update({
+      where: { id: linkCode.userId },
+      data: {
+        telegramId: String(telegramId),
+        telegramUsername: telegramUsername ?? null,
+      },
+    }),
+    prisma.linkCode.update({
+      where: { code },
+      data: { usedAt: new Date() },
+    }),
+  ]);
 
   return NextResponse.json({ ok: true, email: user.email });
 }
