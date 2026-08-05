@@ -607,8 +607,12 @@ function muat(){
 }
 
 muat();
-/* Segarkan otomatis saat halaman dibuka kembali */
+/* Setiap dashboard dibuka/kembali ke depan: segarkan data & kembali ke Hari Ini.
+   Selama masih dibuka, pilihan hari tetap (tidak tersentak balik). */
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) muat();
+  if (!document.hidden){
+    hariDipilih = null;   // kembali ke hari ini saat dashboard dibuka lagi
+    muat();
+  }
 });
 </script>
