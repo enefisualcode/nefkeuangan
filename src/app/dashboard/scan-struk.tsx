@@ -2,20 +2,25 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatRupiah } from "@/lib/format";
 
 type Hasil = {
-  merchant: string | null;
+  merchant: string;
   date: string;
-  amount: number;
+  amount: string;
   category: string;
 };
 
+const KATEGORI = ["Makan", "Transport", "Belanja", "Tagihan", "Parkir", "Lainnya"];
+
 const kotak = { background: "var(--surface)", border: "1px solid var(--line)" } as const;
+const isian = "w-full rounded-[10px] px-3 py-2 text-[13px] outline-none";
+const gayaIsian = { background: "var(--surface-2)", color: "var(--text)" };
 
 export function ScanStruk() {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const kameraRef = useRef<HTMLInputElement>(null);
+  const galeriRef = useRef<HTMLInputElement>(null);
+
   const [membaca, setMembaca] = useState(false);
   const [menyimpan, setMenyimpan] = useState(false);
   const [hasil, setHasil] = useState<Hasil | null>(null);
@@ -23,9 +28,9 @@ export function ScanStruk() {
   const [tipeBayar, setTipeBayar] = useState("Cash");
   const [pesan, setPesan] = useState("");
 
-  async function pilihGambar(e: React.ChangeEvent<HTMLInputElement>) {
+  async function bacaGambar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    e.target.value = ""; // supaya memilih foto yang sama lagi tetap memicu onChange
+    e.target.value = ""; // supaya memilih berkas yang sama lagi tetap memicu onChange
     if (!file) return;
 
     setPesan("");
@@ -44,7 +49,12 @@ export function ScanStruk() {
         setPratinjau(null);
         return;
       }
-      setHasil(data);
+      setHasil({
+        merchant: data.merchant ?? "",
+        date: data.date,
+        amount: String(data.amount),
+        category: KATEGORI.includes(data.category) ? data.category : "Lainnya",
+      });
       setTipeBayar("Cash");
     } catch {
       setPesan("Gagal menghubungi server. Coba lagi.");
@@ -56,15 +66,21 @@ export function ScanStruk() {
 
   async function simpan() {
     if (!hasil) return;
+    const angka = Number(hasil.amount.replace(/\D/g, ""));
+    if (!angka) {
+      setPesan("Nominal harus diisi.");
+      return;
+    }
+
     setMenyimpan(true);
     const res = await fetch("/api/transactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: "EXPENSE",
-        amount: hasil.amount,
+        amount: angka,
         category: hasil.category,
-        merchant: hasil.merchant,
+        merchant: hasil.merchant || null,
         date: hasil.date,
         source: "Struk",
         paymentType: tipeBayar,
@@ -76,11 +92,11 @@ export function ScanStruk() {
       setPesan("Gagal menyimpan transaksi.");
       return;
     }
-    batal();
+    tutup();
     router.refresh();
   }
 
-  function batal() {
+  function tutup() {
     setHasil(null);
     setPratinjau(null);
     setPesan("");
@@ -95,32 +111,55 @@ export function ScanStruk() {
     color: aktif ? (warna === "blue" ? "var(--blue)" : "var(--orange-deep)") : "var(--muted)",
   });
 
+  const ubah = (k: keyof Hasil, v: string) => setHasil((h) => (h ? { ...h, [k]: v } : h));
+
   return (
     <div className="mx-5 mt-2.5">
       <input
-        ref={inputRef}
+        ref={kameraRef}
         type="file"
         accept="image/*"
         capture="environment"
-        onChange={pilihGambar}
+        onChange={bacaGambar}
+        className="hidden"
+      />
+      <input
+        ref={galeriRef}
+        type="file"
+        accept="image/*"
+        onChange={bacaGambar}
         className="hidden"
       />
 
       {!hasil && (
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={membaca}
-          className="mono block w-full rounded-[14px] py-3 text-[12px] tracking-wide disabled:opacity-60"
-          style={{ ...kotak, color: "var(--blue)" }}
-        >
-          {membaca ? "Membaca struk..." : "📸 Scan struk"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => kameraRef.current?.click()}
+            disabled={membaca}
+            className="mono flex-1 rounded-[14px] py-3 text-[12px] tracking-wide disabled:opacity-60"
+            style={{ ...kotak, color: "var(--blue)" }}
+          >
+            {membaca ? "Membaca..." : "📸 Foto struk"}
+          </button>
+          <button
+            onClick={() => galeriRef.current?.click()}
+            disabled={membaca}
+            className="mono flex-1 rounded-[14px] py-3 text-[12px] tracking-wide disabled:opacity-60"
+            style={{ ...kotak, color: "var(--blue)" }}
+          >
+            {membaca ? "Membaca..." : "🖼️ Unggah gambar"}
+          </button>
+        </div>
       )}
 
-      {pesan && (
+      {pesan && !hasil && (
         <p
           className="mt-2 rounded-[14px] px-[15px] py-3 text-[12px] leading-relaxed"
-          style={{ ...kotak, color: "var(--orange-deep)" }}
+          style={{
+            background: "rgba(255,120,71,.10)",
+            border: "1px solid rgba(255,120,71,.28)",
+            color: "var(--orange-deep)",
+          }}
         >
           {pesan}
         </p>
@@ -128,7 +167,10 @@ export function ScanStruk() {
 
       {hasil && (
         <div className="space-y-2.5 rounded-[14px] p-4" style={kotak}>
-          <p className="mono text-[10px] uppercase tracking-[0.13em]" style={{ color: "var(--faint)" }}>
+          <p
+            className="mono text-[10px] uppercase tracking-[0.13em]"
+            style={{ color: "var(--faint)" }}
+          >
             Hasil baca struk
           </p>
 
@@ -137,24 +179,62 @@ export function ScanStruk() {
             <img
               src={pratinjau}
               alt="Struk yang dipindai"
-              className="max-h-40 w-full rounded-[10px] object-contain"
+              className="max-h-36 w-full rounded-[10px] object-contain"
               style={{ background: "var(--surface-2)" }}
             />
           )}
 
-          <div className="space-y-1.5 text-[13px]">
-            <Baris label="Merchant" nilai={hasil.merchant ?? "-"} />
-            <Baris label="Tanggal" nilai={hasil.date} />
-            <Baris label="Kategori" nilai={hasil.category} />
-            <div className="flex items-baseline justify-between gap-3 pt-1">
-              <span className="text-[12px]" style={{ color: "var(--faint)" }}>
-                Nominal
-              </span>
-              <span className="mono text-[17px] font-semibold tabular-nums">
-                {formatRupiah(hasil.amount)}
-              </span>
-            </div>
-          </div>
+          <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--muted)" }}>
+            Periksa dulu — hasil pindai kadang meleset, terutama tanggal. Semua isian
+            di bawah bisa kamu ubah.
+          </p>
+
+          <Label teks="Nominal">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={hasil.amount}
+              onChange={(e) => ubah("amount", e.target.value)}
+              className={isian}
+              style={gayaIsian}
+            />
+          </Label>
+
+          <Label teks="Tanggal">
+            <input
+              type="date"
+              value={hasil.date}
+              onChange={(e) => ubah("date", e.target.value)}
+              className={isian}
+              style={gayaIsian}
+            />
+          </Label>
+
+          <Label teks="Kategori">
+            <select
+              value={hasil.category}
+              onChange={(e) => ubah("category", e.target.value)}
+              className={isian}
+              style={gayaIsian}
+            >
+              {KATEGORI.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+          </Label>
+
+          <Label teks="Merchant">
+            <input
+              type="text"
+              value={hasil.merchant}
+              onChange={(e) => ubah("merchant", e.target.value)}
+              placeholder="Nama toko / tempat"
+              className={isian}
+              style={gayaIsian}
+            />
+          </Label>
 
           <div className="flex gap-2 pt-1">
             <button
@@ -175,9 +255,15 @@ export function ScanStruk() {
             </button>
           </div>
 
+          {pesan && (
+            <p className="text-[12px]" style={{ color: "var(--orange-deep)" }}>
+              {pesan}
+            </p>
+          )}
+
           <div className="flex gap-2">
             <button
-              onClick={batal}
+              onClick={tutup}
               className="mono flex-1 rounded-[10px] py-2 text-[11px]"
               style={{ background: "var(--surface-2)", color: "var(--muted)" }}
             >
@@ -198,13 +284,16 @@ export function ScanStruk() {
   );
 }
 
-function Baris({ label, nilai }: { label: string; nilai: string }) {
+function Label({ teks, children }: { teks: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="text-[12px]" style={{ color: "var(--faint)" }}>
-        {label}
+    <label className="block">
+      <span
+        className="mono text-[10px] uppercase tracking-[0.13em]"
+        style={{ color: "var(--faint)" }}
+      >
+        {teks}
       </span>
-      <span className="text-right">{nilai}</span>
-    </div>
+      <div className="mt-1.5">{children}</div>
+    </label>
   );
 }

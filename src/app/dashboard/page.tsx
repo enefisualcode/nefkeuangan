@@ -30,6 +30,14 @@ export default async function DashboardPage() {
           {data.periodeLabel}
         </div>
       </div>
+      {/* Akun ditampilkan sejak awal: punya beberapa akun membuat catatan mudah
+          masuk ke akun yang salah tanpa disadari. */}
+      <div
+        className="mono truncate px-5 pt-1 text-[10.5px]"
+        style={{ color: "var(--faint)" }}
+      >
+        {session!.user.email}
+      </div>
 
       {/* ---------- hero: hari ini ---------- */}
       <section
