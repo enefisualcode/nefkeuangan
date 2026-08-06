@@ -5,6 +5,7 @@ import { formatRupiah, formatRupiahRingkas } from "@/lib/format";
 import { RincianHarian } from "./rincian-harian";
 import { PengaturanAkun } from "./pengaturan-akun";
 import { TransactionForm } from "./transaction-form";
+import { ScanStruk } from "./scan-struk";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -125,6 +126,7 @@ export default async function DashboardPage() {
       </div>
 
       <TransactionForm />
+      <ScanStruk />
 
       <RincianHarian data={data} />
 
