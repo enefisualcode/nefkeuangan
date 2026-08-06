@@ -5,6 +5,7 @@ import { formatRupiah } from "@/lib/format";
 import { LogoutButton } from "./logout-button";
 import { TransactionForm } from "./transaction-form";
 import { LinkTelegram } from "./link-telegram";
+import { ChangePassword } from "./change-password";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -61,6 +62,8 @@ export default async function DashboardPage() {
         telegramId={user?.telegramId ?? null}
         telegramUsername={user?.telegramUsername ?? null}
       />
+
+      <ChangePassword />
 
       {/* Daily chart */}
       {summary.byDay.length > 0 && (
