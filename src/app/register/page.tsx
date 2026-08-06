@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AuthShell, AuthField, AuthButton, AuthError } from "../auth-ui";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -22,7 +23,6 @@ export default function RegisterPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-
     const data = await res.json();
 
     if (!res.ok) {
@@ -31,15 +31,10 @@ export default function RegisterPage() {
       return;
     }
 
-    const signInRes = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
+    const masuk = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
 
-    if (signInRes?.error) {
+    if (masuk?.error) {
       router.push("/login");
       return;
     }
@@ -49,55 +44,42 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-2xl bg-neutral-900 p-6 shadow-xl"
-      >
-        <h1 className="text-xl font-semibold text-white">Buat Akun</h1>
+    <AuthShell
+      judul="Buat akun"
+      keterangan="Catat lewat web atau bot Telegram — datanya menyatu."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <AuthField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          autoComplete="email"
+          required
+          placeholder="nama@email.com"
+        />
+        <AuthField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          autoComplete="new-password"
+          required
+          minLength={8}
+          placeholder="Minimal 8 karakter"
+        />
 
-        <div>
-          <label className="mb-1 block text-sm text-neutral-400">Email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg bg-neutral-800 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-        </div>
+        <AuthError pesan={error} />
 
-        <div>
-          <label className="mb-1 block text-sm text-neutral-400">
-            Password (min. 8 karakter)
-          </label>
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg bg-neutral-800 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-        </div>
-
-        {error && <p className="text-sm text-red-400">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-emerald-600 py-2 font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-        >
-          {loading ? "Memproses..." : "Daftar"}
-        </button>
-
-        <p className="text-center text-sm text-neutral-400">
-          Sudah punya akun?{" "}
-          <Link href="/login" className="text-emerald-400 hover:underline">
-            Masuk
-          </Link>
-        </p>
+        <AuthButton loading={loading}>Daftar</AuthButton>
       </form>
-    </main>
+
+      <p className="mt-5 text-center text-[12.5px]" style={{ color: "var(--muted)" }}>
+        Sudah punya akun?{" "}
+        <Link href="/login" className="mono" style={{ color: "var(--blue)" }}>
+          Masuk
+        </Link>
+      </p>
+    </AuthShell>
   );
 }
