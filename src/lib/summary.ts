@@ -119,6 +119,7 @@ export async function getSummary(userId: string) {
     jumlahHariIni: perHari.get(todayKey)?.length ?? 0,
     jumlahPeriode: periode.length,
     siklus: HARI_SIKLUS,
+    periodeAwalKey: start.toISOString().slice(0, 10),
   };
 }
 

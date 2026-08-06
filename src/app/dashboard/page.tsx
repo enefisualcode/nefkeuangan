@@ -6,6 +6,7 @@ import { RincianHarian } from "./rincian-harian";
 import { PengaturanAkun } from "./pengaturan-akun";
 import { TransactionForm } from "./transaction-form";
 import { ScanStruk } from "./scan-struk";
+import { UnduhLaporan } from "./unduh-laporan";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -135,6 +136,7 @@ export default async function DashboardPage() {
 
       <TransactionForm />
       <ScanStruk />
+      <UnduhLaporan periodeAwal={data.periodeAwalKey} />
 
       <RincianHarian data={data} />
 
