@@ -131,6 +131,22 @@ body {
   opacity: 1;
 }
 
+/* Safari di iOS memberi input tanggal lebar bawaannya sendiri dan menaruh
+   teksnya rata tengah, sehingga dua kotak berdampingan tampak tidak rata.
+   Lebar dikunci mengikuti wadahnya dan teksnya dirapatkan ke kiri. */
+.tanggal {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+.tanggal::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
 .pilih-hari {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px;

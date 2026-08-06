@@ -110,8 +110,10 @@ export function UnduhLaporan({ periodeAwal }: { periodeAwal: string }) {
         ))}
       </div>
 
+      {/* min-w-0 wajib: tanpa itu lebar bawaan input tanggal mengalahkan
+          pembagian flex, sehingga kedua kotak jadi tidak sama lebar. */}
       <div className="flex gap-2">
-        <label className="block flex-1">
+        <label className="block min-w-0 flex-1">
           <span className="mono text-[10px] uppercase tracking-[0.13em]" style={{ color: "var(--faint)" }}>
             Dari
           </span>
@@ -120,11 +122,11 @@ export function UnduhLaporan({ periodeAwal }: { periodeAwal: string }) {
             value={dari}
             max={sampai}
             onChange={(e) => setDari(e.target.value)}
-            className={`${isian} mt-1.5`}
+            className={`${isian} tanggal mt-1.5`}
             style={gayaIsian}
           />
         </label>
-        <label className="block flex-1">
+        <label className="block min-w-0 flex-1">
           <span className="mono text-[10px] uppercase tracking-[0.13em]" style={{ color: "var(--faint)" }}>
             Sampai
           </span>
@@ -133,7 +135,7 @@ export function UnduhLaporan({ periodeAwal }: { periodeAwal: string }) {
             value={sampai}
             min={dari}
             onChange={(e) => setSampai(e.target.value)}
-            className={`${isian} mt-1.5`}
+            className={`${isian} tanggal mt-1.5`}
             style={gayaIsian}
           />
         </label>
