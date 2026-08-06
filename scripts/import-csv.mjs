@@ -81,7 +81,7 @@ function kolom(header) {
     header.findIndex((h) =>
       nama.some((n) => h.trim().toLowerCase() === n.toLowerCase())
     );
-  return {
+  const map = {
     tanggal: cari("Tanggal"),
     kategori: cari("Kategori"),
     nominal: cari("Nominal"),
@@ -90,6 +90,13 @@ function kolom(header) {
     catatan: cari("Catatan"),
     tipeBayar: cari("Tipe Bayar", "TipeBayar"),
   };
+  // Sheet bisa punya kolom tambahan tanpa judul yang terlanjur diisi catatan.
+  // Indeksnya dikumpulkan supaya isinya tidak ikut hilang.
+  const dikenali = new Set(Object.values(map).filter((i) => i >= 0));
+  map.tanpaJudul = header
+    .map((_, i) => i)
+    .filter((i) => !dikenali.has(i) && !header[i].trim());
+  return map;
 }
 
 const [, , fileArg, emailArg, tipeArg, ...flags] = process.argv;
@@ -127,13 +134,19 @@ for (const r of rows.slice(1)) {
     continue;
   }
 
+  const catatanUtama = idx.catatan >= 0 ? r[idx.catatan]?.trim() : "";
+  const catatanNyasar = idx.tanpaJudul
+    .map((i) => r[i]?.trim())
+    .filter(Boolean)
+    .join(" ");
+
   catatanBaris.push({
     date: tanggal,
     amount: nominal,
     category: kategori || "Lainnya",
     merchant: idx.merchant >= 0 ? r[idx.merchant]?.trim() || null : null,
     source: idx.sumber >= 0 ? r[idx.sumber]?.trim() || "Impor" : "Impor",
-    note: idx.catatan >= 0 ? r[idx.catatan]?.trim() || null : null,
+    note: [catatanUtama, catatanNyasar].filter(Boolean).join(" ") || null,
     paymentType:
       tipeArg === "EXPENSE" && idx.tipeBayar >= 0
         ? r[idx.tipeBayar]?.trim() || null
@@ -186,6 +199,24 @@ if (janggal.length) {
   console.log("");
 }
 
+// Nominal sangat kecil biasanya salah ketik atau salah baca struk.
+const nominalJanggal = catatanBaris.filter((t) => t.amount < 500);
+if (nominalJanggal.length) {
+  console.log(`⚠️  ${nominalJanggal.length} baris bernominal sangat kecil (periksa dulu):`);
+  nominalJanggal.forEach((t) =>
+    console.log(
+      "  -",
+      t.date.toISOString().slice(0, 10),
+      "|",
+      t.category,
+      "| Rp" + t.amount.toLocaleString("id-ID"),
+      "|",
+      t.merchant ?? ""
+    )
+  );
+  console.log("");
+}
+
 console.log("Contoh 3 baris pertama:");
 catatanBaris.slice(0, 3).forEach((t) =>
   console.log("  ", t.date.toISOString().slice(0, 10), t.category, t.amount, t.note ?? "")
@@ -210,14 +241,47 @@ const userId = u.rows[0].id;
 let masuk = 0;
 let duplikat = 0;
 
+// Sheet bisa berisi dua transaksi asli yang isinya kebetulan persis sama
+// (mis. jajan hal yang sama dua kali sehari). Karena itu yang dibandingkan
+// bukan "ada/tidak ada", melainkan JUMLAHNYA: kalau CSV punya 2 dan database
+// baru punya 1, satu lagi tetap dimasukkan. Menjalankan ulang skrip tetap
+// aman karena jumlahnya sudah sama.
+// Driver Postgres menerjemahkan objek Date memakai zona waktu komputer yang
+// menjalankan skrip, sehingga tanggal bisa tersimpan bergeser beberapa jam
+// (bahkan berpindah hari di zona waktu tertentu). Karena itu tanggal dikirim
+// sebagai teks "YYYY-MM-DD" - hasilnya selalu tengah malam, apa pun zonanya.
+const tglTeks = (t) => t.date.toISOString().slice(0, 10);
+
+const kunci = (t) =>
+  [
+    tglTeks(t),
+    t.amount,
+    t.category,
+    t.merchant ?? "",
+    t.note ?? "",
+    t.paymentType ?? "",
+  ].join("|");
+
+const sudahAda = new Map();
 for (const t of catatanBaris) {
-  const ada = await client.query(
-    `SELECT id FROM "Transaction"
+  const k = kunci(t);
+  if (sudahAda.has(k)) continue;
+  const r = await client.query(
+    `SELECT count(*)::int n FROM "Transaction"
      WHERE "userId" = $1 AND date = $2 AND amount = $3 AND category = $4
-       AND COALESCE(note, '') = COALESCE($5, '')`,
-    [userId, t.date, t.amount, t.category, t.note]
+       AND COALESCE(merchant, '') = COALESCE($5, '')
+       AND COALESCE(note, '') = COALESCE($6, '')
+       AND COALESCE("paymentType", '') = COALESCE($7, '')`,
+    [userId, tglTeks(t), t.amount, t.category, t.merchant, t.note, t.paymentType]
   );
-  if (ada.rows.length) {
+  sudahAda.set(k, r.rows[0].n);
+}
+
+for (const t of catatanBaris) {
+  const k = kunci(t);
+  const sisa = sudahAda.get(k) ?? 0;
+  if (sisa > 0) {
+    sudahAda.set(k, sisa - 1);
     duplikat++;
     continue;
   }
@@ -230,7 +294,7 @@ for (const t of catatanBaris) {
       randomUUID(),
       userId,
       tipeArg,
-      t.date,
+      tglTeks(t),
       t.amount,
       t.category,
       t.merchant,
