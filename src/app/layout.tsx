@@ -21,13 +21,33 @@ const mono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
 });
 
+const JUDUL = "Keuangan — Hari Ini";
+const KETERANGAN = "Catat lewat web atau bot Telegram — datanya menyatu.";
+
 export const metadata: Metadata = {
-  title: "Keuangan — Hari Ini",
-  description: "Pencatat keuangan pribadi",
+  // Aplikasi pesan seperti WhatsApp butuh alamat lengkap untuk mengambil
+  // gambar pratinjau; tanpa ini alamatnya jadi relatif dan gambarnya gagal muat.
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://nefkeuangan-production.up.railway.app"
+  ),
+  title: JUDUL,
+  description: KETERANGAN,
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/apple-touch-icon.png",
     apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: JUDUL,
+    description: KETERANGAN,
+    siteName: "Keuangan",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: JUDUL,
+    description: KETERANGAN,
   },
   // Supaya bisa dipasang di layar utama HP dan terbuka layar penuh,
   // sama seperti dashboard versi lama.
