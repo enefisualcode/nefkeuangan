@@ -3,28 +3,32 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const KATEGORI_PENGELUARAN = ["Makan", "Transport", "Belanja", "Tagihan", "Lainnya"];
+const KATEGORI_PENGELUARAN = ["Makan", "Transport", "Belanja", "Tagihan", "Parkir", "Lainnya"];
 const KATEGORI_PEMASUKAN = ["Gaji", "Freelance", "Bonus", "Investasi", "Lainnya"];
+
+const kotak = { background: "var(--surface)", border: "1px solid var(--line)" } as const;
+const isian = "w-full rounded-[10px] px-3 py-2 text-[13px] outline-none";
+const gayaIsian = { background: "var(--surface-2)", color: "var(--text)" };
 
 export function TransactionForm() {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState(KATEGORI_PENGELUARAN[0]);
-  const [note, setNote] = useState("");
-  const [paymentType, setPaymentType] = useState("Cash");
+  const [buka, setBuka] = useState(false);
+  const [jenis, setJenis] = useState<"EXPENSE" | "INCOME">("EXPENSE");
+  const [nominal, setNominal] = useState("");
+  const [kategori, setKategori] = useState(KATEGORI_PENGELUARAN[0]);
+  const [merchant, setMerchant] = useState("");
+  const [catatan, setCatatan] = useState("");
+  const [tipeBayar, setTipeBayar] = useState("Cash");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const categories = type === "EXPENSE" ? KATEGORI_PENGELUARAN : KATEGORI_PEMASUKAN;
+  const daftarKategori = jenis === "EXPENSE" ? KATEGORI_PENGELUARAN : KATEGORI_PEMASUKAN;
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function kirim(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-
-    const numAmount = Number(amount.replace(/\D/g, ""));
-    if (!numAmount) {
+    const angka = Number(nominal.replace(/\D/g, ""));
+    if (!angka) {
       setError("Nominal harus diisi.");
       return;
     }
@@ -34,12 +38,13 @@ export function TransactionForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        type,
-        amount: numAmount,
-        category,
-        note,
-        source: "web",
-        ...(type === "EXPENSE" ? { paymentType } : {}),
+        type: jenis,
+        amount: angka,
+        category: kategori,
+        merchant: merchant || null,
+        note: catatan || null,
+        source: "Web",
+        ...(jenis === "EXPENSE" ? { paymentType: tipeBayar } : {}),
       }),
     });
     setLoading(false);
@@ -49,54 +54,60 @@ export function TransactionForm() {
       return;
     }
 
-    setAmount("");
-    setNote("");
-    setOpen(false);
+    setNominal("");
+    setMerchant("");
+    setCatatan("");
+    setBuka(false);
     router.refresh();
   }
 
-  if (!open) {
+  if (!buka) {
     return (
       <button
-        onClick={() => setOpen(true)}
-        className="w-full rounded-xl bg-emerald-600 py-3 font-medium text-white hover:bg-emerald-500"
+        onClick={() => setBuka(true)}
+        className="mono mx-5 mt-3 block w-[calc(100%-2.5rem)] rounded-[14px] py-3 text-[12px] tracking-wide"
+        style={{ ...kotak, color: "var(--blue)" }}
       >
-        + Catat Transaksi
+        + Catat transaksi
       </button>
     );
   }
 
+  const pilihan = (aktif: boolean, warna: "blue" | "orange") => ({
+    background: aktif
+      ? warna === "blue"
+        ? "rgba(84,168,255,.15)"
+        : "rgba(255,120,71,.15)"
+      : "var(--surface-2)",
+    color: aktif
+      ? warna === "blue"
+        ? "var(--blue)"
+        : "var(--orange-deep)"
+      : "var(--muted)",
+  });
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-3 rounded-xl bg-neutral-900 p-4"
-    >
+    <form onSubmit={kirim} className="mx-5 mt-3 space-y-2.5 rounded-[14px] p-4" style={kotak}>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => {
-            setType("EXPENSE");
-            setCategory(KATEGORI_PENGELUARAN[0]);
+            setJenis("EXPENSE");
+            setKategori(KATEGORI_PENGELUARAN[0]);
           }}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium ${
-            type === "EXPENSE"
-              ? "bg-red-500/20 text-red-300"
-              : "bg-neutral-800 text-neutral-400"
-          }`}
+          className="mono flex-1 rounded-[10px] py-2 text-[11px]"
+          style={pilihan(jenis === "EXPENSE", "orange")}
         >
           Pengeluaran
         </button>
         <button
           type="button"
           onClick={() => {
-            setType("INCOME");
-            setCategory(KATEGORI_PEMASUKAN[0]);
+            setJenis("INCOME");
+            setKategori(KATEGORI_PEMASUKAN[0]);
           }}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium ${
-            type === "INCOME"
-              ? "bg-emerald-500/20 text-emerald-300"
-              : "bg-neutral-800 text-neutral-400"
-          }`}
+          className="mono flex-1 rounded-[10px] py-2 text-[11px]"
+          style={pilihan(jenis === "INCOME", "blue")}
         >
           Pemasukan
         </button>
@@ -106,44 +117,49 @@ export function TransactionForm() {
         type="text"
         inputMode="numeric"
         placeholder="Nominal (mis. 50000)"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        className="w-full rounded-lg bg-neutral-800 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
+        value={nominal}
+        onChange={(e) => setNominal(e.target.value)}
+        className={isian}
+        style={gayaIsian}
       />
 
       <select
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className="w-full rounded-lg bg-neutral-800 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
+        value={kategori}
+        onChange={(e) => setKategori(e.target.value)}
+        className={isian}
+        style={gayaIsian}
       >
-        {categories.map((c) => (
-          <option key={c} value={c}>
-            {c}
+        {daftarKategori.map((k) => (
+          <option key={k} value={k}>
+            {k}
           </option>
         ))}
       </select>
 
-      {type === "EXPENSE" && (
+      <input
+        type="text"
+        placeholder="Merchant / tempat (opsional)"
+        value={merchant}
+        onChange={(e) => setMerchant(e.target.value)}
+        className={isian}
+        style={gayaIsian}
+      />
+
+      {jenis === "EXPENSE" && (
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setPaymentType("Cash")}
-            className={`flex-1 rounded-lg py-2 text-sm ${
-              paymentType === "Cash"
-                ? "bg-emerald-500/20 text-emerald-300"
-                : "bg-neutral-800 text-neutral-400"
-            }`}
+            onClick={() => setTipeBayar("Cash")}
+            className="mono flex-1 rounded-[10px] py-2 text-[11px]"
+            style={pilihan(tipeBayar === "Cash", "blue")}
           >
             💵 Cash
           </button>
           <button
             type="button"
-            onClick={() => setPaymentType("Pay Later")}
-            className={`flex-1 rounded-lg py-2 text-sm ${
-              paymentType === "Pay Later"
-                ? "bg-emerald-500/20 text-emerald-300"
-                : "bg-neutral-800 text-neutral-400"
-            }`}
+            onClick={() => setTipeBayar("Pay Later")}
+            className="mono flex-1 rounded-[10px] py-2 text-[11px]"
+            style={pilihan(tipeBayar === "Pay Later", "orange")}
           >
             💳 Pay Later
           </button>
@@ -153,25 +169,32 @@ export function TransactionForm() {
       <input
         type="text"
         placeholder="Catatan (opsional)"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        className="w-full rounded-lg bg-neutral-800 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
+        value={catatan}
+        onChange={(e) => setCatatan(e.target.value)}
+        className={isian}
+        style={gayaIsian}
       />
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <p className="text-[12px]" style={{ color: "var(--orange-deep)" }}>
+          {error}
+        </p>
+      )}
 
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => setOpen(false)}
-          className="flex-1 rounded-lg bg-neutral-800 py-2 text-sm text-neutral-300"
+          onClick={() => setBuka(false)}
+          className="mono flex-1 rounded-[10px] py-2 text-[11px]"
+          style={{ background: "var(--surface-2)", color: "var(--muted)" }}
         >
           Batal
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+          className="mono flex-1 rounded-[10px] py-2 text-[11px] disabled:opacity-50"
+          style={{ background: "var(--surface-2)", color: "var(--blue)" }}
         >
           {loading ? "Menyimpan..." : "Simpan"}
         </button>

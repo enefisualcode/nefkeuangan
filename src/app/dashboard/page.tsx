@@ -1,146 +1,148 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getSummary } from "@/lib/summary";
-import { formatRupiah } from "@/lib/format";
-import { LogoutButton } from "./logout-button";
+import { formatRupiah, formatRupiahRingkas } from "@/lib/format";
+import { RincianHarian } from "./rincian-harian";
+import { PengaturanAkun } from "./pengaturan-akun";
 import { TransactionForm } from "./transaction-form";
-import { LinkTelegram } from "./link-telegram";
-import { ChangePassword } from "./change-password";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const summary = await getSummary(session!.user.id);
+  const data = await getSummary(session!.user.id);
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
     select: { telegramId: true, telegramUsername: true },
   });
 
-  const maxDay = Math.max(1, ...summary.byDay.map((d) => d.total));
-  const maxCategory = Math.max(1, ...summary.byCategory.map((c) => c.total));
+  const jam = new Date().toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Jakarta",
+  });
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md space-y-4 bg-neutral-950 p-4 pb-10 text-white">
-      <div className="flex items-center justify-between pt-2">
-        <div>
-          <p className="text-sm text-neutral-400">{session!.user.email}</p>
-          <p className="text-xs text-neutral-500">{summary.periodLabel}</p>
+    <main>
+      {/* ---------- kepala ---------- */}
+      <div className="flex items-baseline justify-between gap-3 px-5 pt-7">
+        <div className="eyebrow">Pengeluaran</div>
+        <div className="mono text-[11.5px]" style={{ color: "var(--muted)" }}>
+          {data.periodeLabel}
         </div>
-        <LogoutButton />
       </div>
 
-      {/* Hero Card */}
-      <section className="rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 p-5">
-        <p className="text-sm text-emerald-100">Pengeluaran Hari Ini</p>
-        <p className="mt-1 text-3xl font-bold">{formatRupiah(summary.todayExpense)}</p>
-        <div className="mt-4 flex justify-between text-sm text-emerald-100">
-          <span>Rata-rata harian: {formatRupiah(summary.dailyAverage)}</span>
-          {summary.paylaterOutstanding > 0 && (
-            <span>💳 Pay Later: {formatRupiah(summary.paylaterOutstanding)}</span>
+      {/* ---------- hero: hari ini ---------- */}
+      <section
+        className="kartu naik mx-5 mt-4 rounded-[20px] px-[22px] pt-[22px] pb-5"
+        style={{ borderRadius: 20 }}
+      >
+        <div
+          className="mono text-[10px] uppercase tracking-[0.14em]"
+          style={{ color: "var(--faint)" }}
+        >
+          Hari ini
+        </div>
+        <div className="mt-[3px] text-[12.5px]" style={{ color: "var(--muted)" }}>
+          {data.todayLabel}
+        </div>
+        <div className="display mt-3 text-[42px] font-extrabold leading-[1.05] tracking-[-0.03em] tabular-nums">
+          {formatRupiah(data.totalHariIni)}
+        </div>
+
+        <div
+          className="mt-3 flex items-center gap-2 text-[12.5px] leading-snug"
+          style={{ color: "var(--muted)" }}
+        >
+          {data.totalHariIni === 0 ? (
+            "Belum ada pengeluaran hari ini."
+          ) : (
+            <>
+              <span
+                className="mono rounded-full px-2 py-[3px] text-[11px] font-medium whitespace-nowrap"
+                style={
+                  data.diAtas
+                    ? { background: "rgba(255,120,71,.15)", color: "var(--orange-deep)" }
+                    : { background: "rgba(84,168,255,.15)", color: "var(--blue)" }
+                }
+              >
+                {data.diAtas ? "▲" : "▼"} {data.persen.toFixed(0)}%
+              </span>
+              <span>{data.diAtas ? "di atas" : "di bawah"} rata-rata harianmu</span>
+            </>
           )}
         </div>
-      </section>
 
-      {/* Stat cards */}
-      <section className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-neutral-900 p-4">
-          <p className="text-xs text-neutral-400">Total Pemasukan</p>
-          <p className="mt-1 text-lg font-semibold text-emerald-400">
-            {formatRupiah(summary.totalIncome)}
-          </p>
-        </div>
-        <div className="rounded-xl bg-neutral-900 p-4">
-          <p className="text-xs text-neutral-400">Total Pengeluaran</p>
-          <p className="mt-1 text-lg font-semibold text-red-400">
-            {formatRupiah(summary.totalExpense)}
-          </p>
-        </div>
-      </section>
-
-      <TransactionForm />
-
-      <LinkTelegram
-        telegramId={user?.telegramId ?? null}
-        telegramUsername={user?.telegramUsername ?? null}
-      />
-
-      <ChangePassword />
-
-      {/* Daily chart */}
-      {summary.byDay.length > 0 && (
-        <section className="rounded-xl bg-neutral-900 p-4">
-          <p className="mb-3 text-sm font-medium text-neutral-300">Pengeluaran Harian</p>
-          <div className="flex h-32 items-end gap-1">
-            {summary.byDay.map((d) => (
-              <div
-                key={d.date}
-                title={`${d.date}: ${formatRupiah(d.total)}`}
-                className="flex-1 rounded-t bg-emerald-600/70"
-                style={{ height: `${Math.max(4, (d.total / maxDay) * 100)}%` }}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Category breakdown */}
-      {summary.byCategory.length > 0 && (
-        <section className="rounded-xl bg-neutral-900 p-4">
-          <p className="mb-3 text-sm font-medium text-neutral-300">Per Kategori</p>
-          <div className="space-y-2">
-            {summary.byCategory.map((c) => (
-              <div key={c.category}>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="text-neutral-300">{c.category}</span>
-                  <span className="text-neutral-400">{formatRupiah(c.total)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-neutral-800">
-                  <div
-                    className="h-2 rounded-full bg-emerald-600"
-                    style={{ width: `${(c.total / maxCategory) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Transaction list */}
-      <section className="rounded-xl bg-neutral-900 p-4">
-        <p className="mb-3 text-sm font-medium text-neutral-300">Transaksi Terbaru</p>
-        {summary.recentTransactions.length === 0 ? (
-          <p className="text-sm text-neutral-500">Belum ada transaksi periode ini.</p>
-        ) : (
-          <div className="space-y-3">
-            {summary.recentTransactions.map((t) => (
-              <div key={t.id} className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-neutral-200">
-                    {t.category}
-                    {t.merchant ? ` · ${t.merchant}` : ""}
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    {t.date.toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      timeZone: "UTC",
-                    })}
-                    {t.note ? ` · ${t.note}` : ""}
-                  </p>
-                </div>
-                <p
-                  className={`text-sm font-medium ${
-                    t.type === "EXPENSE" ? "text-red-400" : "text-emerald-400"
-                  }`}
-                >
-                  {t.type === "EXPENSE" ? "-" : "+"}
-                  {formatRupiah(t.amount)}
-                </p>
-              </div>
-            ))}
+        {data.payLater > 0 && (
+          <div
+            className="mt-3.5 flex items-baseline justify-between gap-3 pt-[13px]"
+            style={{ borderTop: "1px solid var(--line)" }}
+          >
+            <span
+              className="mono text-[10px] uppercase tracking-[0.13em]"
+              style={{ color: "var(--faint)" }}
+            >
+              Total Pay Later
+            </span>
+            <span
+              className="mono text-[15px] font-semibold tabular-nums"
+              style={{ color: "var(--orange-deep)" }}
+            >
+              {formatRupiah(data.payLater)}
+            </span>
           </div>
         )}
       </section>
+
+      {/* ---------- statistik ---------- */}
+      <div className="naik mx-5 mt-3 grid grid-cols-2 gap-2.5">
+        <div className="kartu rounded-[14px] px-[15px] py-3.5">
+          <div
+            className="mono text-[9.5px] uppercase tracking-[0.13em]"
+            style={{ color: "var(--faint)" }}
+          >
+            Rata-rata harian
+          </div>
+          <div className="mono mt-1.5 text-[17px] font-medium tabular-nums tracking-[-0.01em]">
+            {formatRupiah(data.rata)}
+          </div>
+          <div className="mt-[3px] text-[11px]" style={{ color: "var(--muted)" }}>
+            dari {data.hariAktif} hari ada transaksi
+          </div>
+        </div>
+        <div className="kartu rounded-[14px] px-[15px] py-3.5">
+          <div
+            className="mono text-[9.5px] uppercase tracking-[0.13em]"
+            style={{ color: "var(--faint)" }}
+          >
+            Total periode
+          </div>
+          <div className="mono mt-1.5 text-[17px] font-medium tabular-nums tracking-[-0.01em]">
+            {formatRupiahRingkas(data.totalPeriode)}
+          </div>
+          <div className="mt-[3px] text-[11px]" style={{ color: "var(--muted)" }}>
+            hari ke-{data.hariKe} dari {data.totalHari}
+          </div>
+        </div>
+      </div>
+
+      <TransactionForm />
+
+      <RincianHarian data={data} />
+
+      {/* ---------- kaki ---------- */}
+      <div
+        className="mono mx-5 mt-8 pt-4 text-[10.5px] leading-[1.7]"
+        style={{ borderTop: "1px solid var(--line)", color: "var(--faint)" }}
+      >
+        {data.jumlahHariIni} transaksi hari ini · {data.jumlahPeriode} periode ini
+        <br />
+        Siklus tanggal {data.siklus} ke {data.siklus - 1} · Diperbarui {jam}
+      </div>
+
+      <PengaturanAkun
+        email={session!.user.email ?? ""}
+        telegramId={user?.telegramId ?? null}
+        telegramUsername={user?.telegramUsername ?? null}
+      />
     </main>
   );
 }
