@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -14,8 +14,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NefKeuangan",
+  title: "Keuangan — Hari Ini",
   description: "Pencatat keuangan pribadi",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/apple-touch-icon.png",
+    apple: "/apple-touch-icon.png",
+  },
+  // Supaya bisa dipasang di layar utama HP dan terbuka layar penuh,
+  // sama seperti dashboard versi lama.
+  appleWebApp: {
+    capable: true,
+    title: "Keuangan",
+    statusBarStyle: "black",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0B1220",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -6,7 +6,9 @@ import authConfig from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  session: { strategy: "jwt" },
+  // Sesi panjang supaya membuka dashboard tidak sering terhalang login -
+  // masa berlakunya diperbarui tiap kali dibuka.
+  session: { strategy: "jwt", maxAge: 90 * 24 * 60 * 60 },
   providers: [
     Credentials({
       credentials: {
