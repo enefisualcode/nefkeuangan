@@ -105,8 +105,8 @@ export function ScanStruk() {
   const pilihan = (aktif: boolean, warna: "blue" | "orange") => ({
     background: aktif
       ? warna === "blue"
-        ? "rgba(84,168,255,.15)"
-        : "rgba(255,120,71,.15)"
+        ? "var(--blue-lembut)"
+        : "var(--oranye-lembut)"
       : "var(--surface-2)",
     color: aktif ? (warna === "blue" ? "var(--blue)" : "var(--orange-deep)") : "var(--muted)",
   });
@@ -156,8 +156,8 @@ export function ScanStruk() {
         <p
           className="mt-2 rounded-[14px] px-[15px] py-3 text-[12px] leading-relaxed"
           style={{
-            background: "rgba(255,120,71,.10)",
-            border: "1px solid rgba(255,120,71,.28)",
+            background: "var(--oranye-samar)",
+            border: "1px solid var(--oranye-garis)",
             color: "var(--orange-deep)",
           }}
         >

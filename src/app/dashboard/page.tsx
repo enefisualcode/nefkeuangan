@@ -70,8 +70,8 @@ export default async function DashboardPage() {
                 className="mono rounded-full px-2 py-[3px] text-[11px] font-medium whitespace-nowrap"
                 style={
                   data.diAtas
-                    ? { background: "rgba(255,120,71,.15)", color: "var(--orange-deep)" }
-                    : { background: "rgba(84,168,255,.15)", color: "var(--blue)" }
+                    ? { background: "var(--oranye-lembut)", color: "var(--orange-deep)" }
+                    : { background: "var(--blue-lembut)", color: "var(--blue)" }
                 }
               >
                 {data.diAtas ? "▲" : "▼"} {data.persen.toFixed(0)}%

@@ -1,7 +1,12 @@
 @import "tailwindcss";
 
-/* Palet dan tipografi diambil dari dashboard lama supaya tampilannya persis. */
-:root {
+/* Palet gelap diambil dari dashboard lama supaya tampilannya persis.
+   Tema dipilih lewat atribut data-tema pada <html>, yang diisi skrip kecil
+   di layout sebelum halaman tampil - supaya tidak sempat berkedip warna. */
+:root,
+[data-tema="dark"] {
+  color-scheme: dark;
+
   --ink: #0b1220;
   --surface: #131d30;
   --surface-2: #1c2841;
@@ -12,6 +17,36 @@
   --text: #e9f0fa;
   --muted: #8c9cb8;
   --faint: #5a6b88;
+
+  --blue-lembut: rgba(84, 168, 255, 0.15);
+  --oranye-lembut: rgba(255, 120, 71, 0.15);
+  --oranye-samar: rgba(255, 120, 71, 0.1);
+  --oranye-garis: rgba(255, 120, 71, 0.28);
+  --sorot: rgba(233, 240, 250, 0.9);
+  --bayang: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Versi terang: warna aksen dipekatkan agar tetap terbaca di atas putih. */
+[data-tema="light"] {
+  color-scheme: light;
+
+  --ink: #f4f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f7;
+  --line: #dde3ed;
+  --blue: #1b66c2;
+  --orange: #ef8a2e;
+  --orange-deep: #b8481c;
+  --text: #101827;
+  --muted: #55647d;
+  --faint: #5c6a82;
+
+  --blue-lembut: rgba(27, 102, 194, 0.12);
+  --oranye-lembut: rgba(184, 72, 28, 0.09);
+  --oranye-samar: rgba(184, 72, 28, 0.08);
+  --oranye-garis: rgba(184, 72, 28, 0.3);
+  --sorot: rgba(16, 24, 39, 0.75);
+  --bayang: 0 8px 20px rgba(16, 24, 39, 0.12);
 }
 
 body {
@@ -108,7 +143,7 @@ body {
 }
 .col.pilih i {
   opacity: 1;
-  outline: 2px solid rgba(233, 240, 250, 0.9);
+  outline: 2px solid var(--sorot);
   outline-offset: 1px;
   border-radius: 3px;
 }
@@ -122,7 +157,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 5px 10px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--bayang);
   opacity: 0;
   transition: opacity 0.15s;
   z-index: 5;
@@ -162,6 +197,12 @@ body {
   background-repeat: no-repeat;
   background-position: right 10px center;
   max-width: 56%;
+}
+
+/* Warna panah ikut menyesuaikan tema - warnanya tertanam di dalam gambar SVG
+   sehingga tidak bisa memakai variabel, jadi digantikan per tema. */
+[data-tema="light"] .pilih-hari {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 3.5 L5 6.5 L8 3.5' stroke='%231B66C2' fill='none' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -122,8 +122,8 @@ export function AuthError({ pesan }: { pesan: string }) {
     <p
       className="rounded-[12px] px-[14px] py-3 text-[12.5px] leading-relaxed"
       style={{
-        background: "rgba(255,120,71,.10)",
-        border: "1px solid rgba(255,120,71,.28)",
+        background: "var(--oranye-samar)",
+        border: "1px solid var(--oranye-garis)",
         color: "var(--orange-deep)",
       }}
     >

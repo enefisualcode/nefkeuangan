@@ -76,8 +76,8 @@ export function TransactionForm() {
   const pilihan = (aktif: boolean, warna: "blue" | "orange") => ({
     background: aktif
       ? warna === "blue"
-        ? "rgba(84,168,255,.15)"
-        : "rgba(255,120,71,.15)"
+        ? "var(--blue-lembut)"
+        : "var(--oranye-lembut)"
       : "var(--surface-2)",
     color: aktif
       ? warna === "blue"

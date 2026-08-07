@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import { PilihTema } from "./pilih-tema";
 
 export function PengaturanAkun({
   email,
@@ -34,6 +35,7 @@ export function PengaturanAkun({
             Masuk sebagai <span style={{ color: "var(--text)" }}>{email}</span>
           </div>
 
+          <PilihTema />
           <HubungkanTelegram telegramId={telegramId} telegramUsername={telegramUsername} />
           <GantiPassword />
 

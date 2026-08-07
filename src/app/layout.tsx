@@ -59,18 +59,32 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B1220",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F4F6FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B1220" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
+
+// Tema dipasang sebelum halaman digambar. Kalau ditunda sampai React jalan,
+// halaman sempat tampil gelap sekejap lalu berkedip jadi terang.
+const SKRIP_TEMA = `(function(){try{var t=localStorage.getItem('tema');
+if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.setAttribute('data-tema',t);}catch(e){
+document.documentElement.setAttribute('data-tema','dark');}})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="id"
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SKRIP_TEMA }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>
